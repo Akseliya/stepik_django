@@ -1,80 +1,74 @@
 from django.http import HttpResponse, HttpResponseNotFound, Http404
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
+
+from women.models import Women, Category
 
 menu = [
-    {'title': 'О сайте', 'url_name': 'about'},
-    {'title': 'Добавить статью', 'url_name': 'add_page'},
-    {'title': 'Обратная связь', 'url_name': 'contact'},
-    {'title': 'Войти', 'url_name': 'login'},
+    {"title": "О сайте", "url_name": "about"},
+    {"title": "Добавить статью", "url_name": "add_page"},
+    {"title": "Обратная связь", "url_name": "contact"},
+    {"title": "Войти", "url_name": "login"},
 ]
 
 data_db = [
-    {'id': 1, 'title': 'Анджелина Джоли', 'context': 'Биография Анджелины Джоли', 'is_published': True},
-    {'id': 2, 'title': 'Дженнифер Лоуренс', 'context': 'Биография Дженнифер Лоуренс', 'is_published': False},
-    {'id': 3, 'title': 'Джулия Робертс', 'context': 'Биография Джулии Робертс', 'is_published': True},
-]
-
-cats_db = [
-    {'id': 1, 'name': 'Актрисы'},
-    {'id': 2, 'name': 'Певицы'},
-    {'id': 3, 'name': 'Спортсменки'},
+    {"id": 1, "title": "Анджелина Джоли", "context": "Биография Анджелины Джоли", "is_published": True},
+    {"id": 2, "title": "Дженнифер Лоуренс", "context": "Биография Дженнифер Лоуренс", "is_published": False},
+    {"id": 3, "title": "Джулия Робертс", "context": "Биография Джулии Робертс", "is_published": True},
 ]
 
 
 def index(request):
-    # передача данных в шаблон
+    posts = Women.published.all()
+
     data = {
         'title': 'Главная страница',
         'menu': menu,
-        'posts': data_db
+        'posts': posts,
+        'cat_selected': 0,
     }
-    return render(request, 'women/index.html', data)  # можно context=data
-
-
-def show_post(request, post_id):
-    return HttpResponse(f'Отображение статьи с id = {post_id}')
-
-
-def categories(request, cat_id):
-    return HttpResponse(f'<h1>Статьи по категориям</h1><p>id: {cat_id}</p>')
-
-
-def categories_by_slug(request, cat_slug):
-    return HttpResponse(f'<h1>Статьи по категориям</h1><p>slag: {cat_slug}</p>')
-
-
-def archive(request, year):
-    if year > 2025:
-        raise Http404()
-    elif year < 1990:
-        return redirect('home')
-    return HttpResponse(f'<h1>Архив по годам</h1><p>{year}</p>')
-
-
-def page_not_found(request, exception):
-    return HttpResponseNotFound('<h1>Страница не найдена</h1>')
-
-
-def post_detail(request):
-    if request.GET:
-        result = '|'.join([f'{k}={v}' for k, v in request.GET.items()])
-
-        return HttpResponse(result)
-    else:
-        return HttpResponse('GET is empty')
+    return render(request, 'women/index.html', context=data)
 
 
 def about(request):
-    return render(request, 'women/about.html')
+    return render(request, 'women/about.html', {'title': 'О сайте', 'menu': menu})
 
 
-def add_page(request):
-    return HttpResponseNotFound('<h1>Добавить статью</h1>')
+def show_post(request, post_slug):
+    post = get_object_or_404(Women, slug=post_slug)
+    data = {
+        'menu': menu,
+        'title': post.title,
+        'post': post,
+        'cat_selected': 1,
+    }
+
+    return render(request, 'women/post.html', data)
+
+
+def addpage(request):
+    return HttpResponse("Добавление статьи")
 
 
 def contact(request):
-    return HttpResponseNotFound('<h1>Обратная связь</h1>')
+    return HttpResponseNotFound("<h1>Обратная связь</h1>")
 
 
 def login(request):
-    return HttpResponseNotFound('<h1>Войти</h1>')
+    return HttpResponse("Авторизация")
+
+
+def show_category(request, cat_slug):
+    category = get_object_or_404(Category, slug=cat_slug)
+    posts = Women.objects.filter(cat_id=category.pk)
+
+    data = {
+        'title': f'Рубрика: {category.name}',
+        'menu': menu,
+        'posts': posts,
+        'cat_selected': category.pk,
+    }
+    return render(request, 'women/index.html', context=data)
+
+
+def page_not_found(request, exception):
+    return HttpResponseNotFound("<h1>Страница не найдена</h1>")
