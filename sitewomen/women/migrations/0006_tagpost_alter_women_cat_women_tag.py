@@ -39,8 +39,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="women",
             name="tag",
-            field=models.ManyToManyField(
-                blank=True, related_name="tags", to="women.tagpost"
-            ),
+            field=models.ManyToManyField(blank=True, related_name="tags", to="women.tagpost"),
         ),
     ]
